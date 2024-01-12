@@ -1,0 +1,28 @@
+
+const HEX_LIST = [
+    '0', '1', '2', '3',
+    '4', '5', '6', '7',
+    '8', '9', 'A', 'B',
+    'C', 'D', 'E', 'F',
+];
+
+export async function delay(ms: number) {
+    return new Promise((resolve, _) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+export function parseUtf8(buf: number[] | Uint8Array, index: number, len: number) {
+    const decoder = new TextDecoder('utf-8');
+    return decoder.decode(Uint8Array.from(buf.slice(index, index + len)));
+}
+
+export function toHex(buf: number[] | Uint8Array, index: number, len: number) {
+    let s = '';
+    for (let i = 0; i < len; i ++) {
+        const v = buf[i + index];
+        s += HEX_LIST[(v >> 4) & 0x0F];
+        s += HEX_LIST[v & 0x0F];
+    }
+    return s;
+}
