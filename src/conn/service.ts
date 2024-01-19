@@ -1,6 +1,6 @@
 import { DeviceProtoType, Uint16, Uint8, encode_u16, encode_u8 } from "./codec";
 import device from "./device";
-import { proto_type, setAckPromise, setPongPromise, setResPromise, setSimpleResPromise } from "./receive";
+import { proto_type, setWaitPromise } from "./receive";
 import { TaskInfo } from "./proto";
 import { TimeoutError } from "./error";
 import { BillIdentificationResp, BillSetupResp, CoinIdentificationResp, CoinSetupResp, CoinStatusResp } from "./status";
@@ -29,6 +29,8 @@ export module proto {
 	export const BILL_CTRL = 0x0F;
 
 	export const PAY_INIT = 0x10;
+
+	export const PICK_CTRL = 0x11;
 }
 
 let defaultSeq = 0;
@@ -65,15 +67,19 @@ function makeProto(...args: DeviceProtoType[]) {
 	return buf;
 }
 
-async function simpleReq(cmd: number, ...args: DeviceProtoType[]) {
-	const buf = makeProto(new Uint8(proto_type.SIMPLE_REQ), new Uint8(cmd), ...args);
-	const fut = setSimpleResPromise();
+async function simpleReq(seq: number, cmd: number, ...args: DeviceProtoType[]) {
+	const buf = makeProto(new Uint8(proto_type.SIMPLE_REQ), new Uint8(seq), new Uint8(cmd), ...args);
+	const fut = setWaitPromise(proto_type.SIMPLE_RES, seq, 500);
 	await device.write(buf);
-	return await fut;
+	const res = await fut;
+	if ((res.seq != seq) || (res.cmd != cmd)) {
+		throw `seq or cmd invalid`;
+	}
+	return res;
 }
 
 async function getTaskInfo(): Promise<TaskInfo> {
-	const frame = await simpleReq(proto.GET_TASK_INFO);
+	const frame = await simpleReq(getSeq(), proto.GET_TASK_INFO);
 	const seq = new Uint8();
 	const cmd = new Uint8();
 	frame.parse(seq, cmd);
@@ -84,12 +90,13 @@ async function getTaskInfo(): Promise<TaskInfo> {
 }
 
 async function session() {
-	const buf = makeProto(new Uint8(proto_type.SESSION));
-	const fut = setAckPromise();
+	const seq = getSeq();
+	const buf = makeProto(new Uint8(proto_type.SESSION), new Uint8(seq));
+	const fut = setWaitPromise(proto_type.ACK, seq);
 	await device.write(buf);
-	const seq = await fut;
-	if (seq != 0) {
-		throw `session seq != 0 ${seq}`;
+	const ack = await fut;
+	if (ack.seq != seq) {
+		throw `session seq invalid`;
 	}
 }
 
@@ -115,11 +122,11 @@ async function res3(seq: number, buf: number[]) {
 	let err: any = null;
 	for (let i = 0; i < 3; i++) {
 		try {
-			let ackFut = setAckPromise();
+			let ackFut = setWaitPromise(proto_type.ACK, seq);
 			await device.write(buf);
-			const s = await ackFut;
-			if (s != seq) {
-				throw `ack seq invalid ${s} - ${seq}`;
+			const ack = await ackFut;
+			if (ack.seq != seq) {
+				throw `ack seq invalid ${ack.seq} - ${seq}`;
 			}
 			return;
 		} catch (e) {
@@ -136,7 +143,7 @@ async function req(seq: number, cmd: number, ...args: DeviceProtoType[]) {
 	await session3();
 
 	const buf = makeProto(new Uint8(proto_type.REQ), new Uint8(seq), new Uint8(cmd), ...args);
-	let resFut = setResPromise();
+	let resFut = setWaitPromise(proto_type.RES, seq, 3000);
 	await res3(seq, buf);
 
 	for (; ;) {
@@ -149,7 +156,7 @@ async function req(seq: number, cmd: number, ...args: DeviceProtoType[]) {
 			if (e instanceof TimeoutError) {
 				console.log('res 超时');
 
-				resFut = setResPromise();
+				resFut = setWaitPromise(proto_type.RES, seq, 3000);
 				const taskInfo = await getTaskInfo();
 				console.log(taskInfo);
 
@@ -172,10 +179,14 @@ export default {
 	},
 
 	async ping() {
-		const buf = makeProto(new Uint8(proto_type.PING));
-		const fut = setPongPromise();
+		const seq = getSeq();
+		const buf = makeProto(new Uint8(proto_type.PING), new Uint8(seq));
+		const fut = setWaitPromise(proto_type.PONG, seq);
 		await device.write(buf);
-		await fut;
+		const pong = await fut;
+		if (seq != pong.seq) {
+			throw 'pong seq invalid';
+		}
 	},
 
 	async coinPayout(value: number) {
@@ -277,9 +288,13 @@ export default {
 	},
 
 	// id: 0硬币器 1纸币器 2VPOS
-	// ctrl: 0启用 1禁用
-	async payInit(id: number, ctrl: number) {
-		const frame = await req(getSeq(), proto.PAY_INIT, new Uint8(id), new Uint8(ctrl));
+	async payInit(id: number) {
+		const frame = await req(getSeq(), proto.PAY_INIT, new Uint8(id));
+		frame.assert();
+	},
+
+	async pickDoorCtrl(ctrl: number) {
+		const frame = await req(getSeq(), proto.PICK_CTRL, new Uint8(ctrl));
 		frame.assert();
 	}
 }

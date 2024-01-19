@@ -1,27 +1,8 @@
 import { showToast } from "../utils/Popup";
-import { DeviceProtoType, Uint16, Uint8 } from "./codec";
+import { Uint16, Uint8 } from "./codec";
+import { RecvFrame } from "./proto";
 import service, { proto } from "./service";
 
-export class NotifyAckFrame {
-
-    seq: number;
-    cmd: number;
-    buf: number[];
-
-    constructor(buf: number[]) {
-        this.seq = buf[1];
-        this.cmd = buf[2];
-        this.buf = buf;
-    }
-
-    parse(...args: DeviceProtoType[]) {
-        let index = 3; // type seq cmd
-        for (const arg of args) {
-            arg.decode(this.buf, index);
-            index += arg.size();
-        }
-    }
-}
 
 export class CoinPayInInfo {
 
@@ -31,7 +12,7 @@ export class CoinPayInInfo {
     all = new Uint16();
 }
 
-function onCoinPayIn(frame: NotifyAckFrame) {
+function onCoinPayIn(frame: RecvFrame) {
     const info = new CoinPayInInfo();
     frame.parse(
         info.position,
@@ -42,7 +23,7 @@ function onCoinPayIn(frame: NotifyAckFrame) {
     showToast(`投币:${info.all.value}`);
 }
 
-function onBillPayIn(frame: NotifyAckFrame) {
+function onBillPayIn(frame: RecvFrame) {
     const rout = new Uint8();
     const type = new Uint8();
     const all = new Uint16();
@@ -55,12 +36,12 @@ function onBillPayIn(frame: NotifyAckFrame) {
     }
 }
 
-export function handle_notify_ack(frame: number[]) {
-    const n = new NotifyAckFrame(frame);
-    service.ack(n.seq);
-    switch (n.cmd) {
-        case proto.COIN_PAYIN: onCoinPayIn(n); break;
-        case proto.BILL_PAYIN: onBillPayIn(n); break;
+export function handle_notify_ack(frame: RecvFrame) {
+
+    service.ack(frame.seq);
+    switch (frame.cmd) {
+        case proto.COIN_PAYIN: onCoinPayIn(frame); break;
+        case proto.BILL_PAYIN: onBillPayIn(frame); break;
     }
 }
 

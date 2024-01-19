@@ -2,18 +2,17 @@
   <div class="card col p10 m5">
     <div class="cent_self">硬币器</div>
     <div class="row_center mt5">
-      <label class="mr10">退款:</label>
-      <el-input style="width: 100px;" v-model="ctx.payout_value" />
+      <el-input placeholder="退款金额" clearable style="width: 80px;" v-model="ctx.payout_value" />
       <el-button type="warning" @click="onClickPayout" class="ml10">退款</el-button>
-    </div>
-    <div class="row_center mt5">
-      <label class="mr10">控制码:</label>
-      <el-input style="width: 100px;" v-model="ctx.pay_ctrl"/>
+
+      <el-input class="ml10" clearable placeholder="控制码" style="width: 80px;" v-model="ctx.pay_ctrl"/>
       <el-button @click="onClickPayCtrl" type="primary" class="ml10">启用/禁用</el-button>
     </div>
     <div class="row_center mt5">
+
+    </div>
+    <div class="row_center mt5">
       <el-button type="primary" @click="onClickInit">初始化</el-button>
-      <el-button type="warning" @click="onClickStop">停机</el-button>
     </div>
     <div class="row">
       <CoinStatus/>
@@ -66,13 +65,7 @@ async function onClickPayCtrl() {
 
 async function onClickInit() {
   runAction('硬币器', "初始化", async () => {
-    await service.payInit(0, 0);
-  });
-}
-
-async function onClickStop() {
-  runAction('硬币器', "停机", async () => {
-    await service.payInit(0, 1);
+    await service.payInit(0);
   });
 }
 

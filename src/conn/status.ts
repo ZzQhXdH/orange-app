@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { ByteArray, ByteView, Uint16, Uint8 } from './codec.ts';
-import { NotiftyFrame } from './proto.ts';
+import { RecvFrame } from './proto.ts';
 import { parseUtf8, toHex } from '../utils/util.ts';
 
 const HEX_LIST = [
@@ -18,30 +18,64 @@ function toHex4(n: number) {
   return `${h4}${h3}${h2}${h1}`;
 }
 
+function parseCoinStatus(value: number) {
+  const type = (value >> 8) & 0xFF;
+  const status = value & 0xFF;
+
+  switch (type) {
+    case 0: return '手动取币';
+    case 1: return '投币'; 
+    case 2: return `状态:${status}`;
+    case 3: return `SLUG:${status}`;
+    case 4: return `ACK`;
+    case 5: return '通信异常';
+    case 6: return '无法处理的数据';
+    default: return '未知状态';
+  }
+}
+
+function parseBillStatus(value: number) {
+  const type = (value >> 8) & 0xFF;
+  const status = value & 0xFF;
+  switch (type) {
+    case 0: return 'ACK';
+    case 1: return '收取纸币';
+    case 2: return `状态:${status}`;
+    case 3: return '通信异常';
+    default: return '未知状态';
+  }
+}
+
 class DeviceStatus {
 
   version: string = '';
+  coinStatus: string = '';
+  billStatus: string = '';
 
-  constructor(frame: NotiftyFrame | null = null) {
+  constructor(frame: RecvFrame | null = null) {
     if (frame == null) {
       return;
     }
     const version = new Uint16();
+    const coin = new Uint16();
+    const bill = new Uint16();
 
-    frame.parse(version);
+    frame.parse(version, coin, bill);
 
     this.version = toHex4(version.value);
+    this.coinStatus = parseCoinStatus(coin.value);
+    this.billStatus = parseBillStatus(bill.value);
   }
 };
 
 export const deviceStatus = ref<DeviceStatus>(new DeviceStatus());
 
-export function parseStatus(frame: NotiftyFrame) {
+export function parseStatus(frame: RecvFrame) {
   deviceStatus.value = new DeviceStatus(frame);
   //console.log(deviceStatus.value);
 }
 
-export function parseLog(frame: NotiftyFrame) {
+export function parseLog(frame: RecvFrame) {
   const bw = new ByteView();
   frame.parse(bw);
   console.log(`log:${bw.toString()}`);

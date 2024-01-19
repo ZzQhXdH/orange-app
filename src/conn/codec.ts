@@ -107,7 +107,7 @@ export class ByteArray implements DeviceProtoType {
     size(): number {
         return this.buf.length;
     }
-    encode(buf: number[], index: number): void {
+    encode(_buf: number[], _index: number): void {
         throw '无法序列化';
     }
     decode(buf: number[], index: number): void {

@@ -1,6 +1,11 @@
 <template>
-  <SerialPort/>
-  <Status/>
+  <div class="col">
+    <div class="row">
+      <SerialPort class="start_self"/>
+      <Status class="start_self"/>
+    </div>
+
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -11,3 +11,7 @@ app.use(router);
 app.mount("#app");
 
 
+if (import.meta.env.MODE != 'development') {
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+

@@ -1,51 +1,20 @@
 import { DeviceProtoType, Uint8 } from "./codec";
 import { ExecError } from "./error";
 
-export class NotiftyFrame {
 
-    cmd: number;
-    buf: number[];
+export class RecvFrame {
 
-    constructor(buf: number[]) {
-        this.cmd = buf[1];
-        this.buf = buf;
-    }
-
-    parse(...args: DeviceProtoType[]) {
-        let index = 2;
-        for (const arg of args) {
-            arg.decode(this.buf, index);
-            index += arg.size();
-        }
-    }
-}
-
-export class SimpleResFrame {
-
-    cmd: number;
-    buf: number[];
-
-    constructor(buf: number[]) {
-        this.cmd = buf[1];
-        this.buf = buf;
-    }
-
-    parse(...args: DeviceProtoType[]) {
-        let index = 2;
-        for (const arg of args) {
-            arg.decode(this.buf, index);
-            index += arg.size();
-        }
-    }
-}
-
-export class ResFrame {
-
+    type: number;
     seq: number;
     cmd: number;
     buf: number[];
 
+    key(): number {
+        return (this.type << 8) + this.seq;
+    }
+
     constructor(buf: number[]) {
+        this.type = buf[0];
         this.seq = buf[1];
         this.cmd = buf[2];
         this.buf = buf;

@@ -14,7 +14,7 @@ export class Popup extends MoveableEle {
     }
 }
 
-export function showToast(msg: string, timeout = 500) {
+export function showToast(msg: string, timeout = 1000) {
     new Popup(msg, timeout);
 }
 
