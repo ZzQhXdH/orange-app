@@ -9,7 +9,7 @@ function createElement(text: string, ...clzs: string[]) {
     return ele;
 }
 
-class Dialog {
+export class Dialog {
 
     btnClose = createElement('', 'close_btn');
     divTitle: HTMLDivElement;
@@ -37,6 +37,10 @@ class Dialog {
         row.appendChild(this.divMsg);
 
         this.show();
+    }
+
+    setMsg(msg: string) {
+        this.divMsg.innerText = msg;
     }
 
     prog(msg: string) {

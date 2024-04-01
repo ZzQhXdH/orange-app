@@ -1,4 +1,4 @@
-import { parseUtf8 } from "../utils/util";
+import { memcpy, parseUtf8 } from "../utils/util";
 
 export function encode_u8(buf: number[], index: number, value: number) {
     buf[index] = value & 0xFF;
@@ -52,6 +52,10 @@ export class Uint16 implements DeviceProtoType {
         this.value = v;
     }
 
+    isSet(bit: number): boolean {
+        return (this.value & (0x01 << bit)) != 0x00; 
+    }
+
     size(): number {
         return 2;
     }
@@ -92,7 +96,7 @@ export class Uint32 implements DeviceProtoType {
         this.value = (buf[index] << 24) +
             (buf[index + 1] << 16) +
             (buf[index + 2] << 8) +
-             buf[index + 3];
+            buf[index + 3];
     }
 }
 
@@ -107,13 +111,11 @@ export class ByteArray implements DeviceProtoType {
     size(): number {
         return this.buf.length;
     }
-    encode(_buf: number[], _index: number): void {
-        throw '无法序列化';
+    encode(buf: number[], index: number): void {
+        memcpy(buf, index, this.buf, 0, this.buf.length);
     }
     decode(buf: number[], index: number): void {
-        for (let i = 0; i < this.buf.length; i ++) {
-            this.buf[i] = buf[index + i];
-        }
+        memcpy(this.buf, 0, buf, index, this.buf.length);
     }
 }
 
@@ -135,9 +137,7 @@ export class ByteView implements DeviceProtoType {
 
     encode(buf: number[], index: number): void {
         buf[index] = this.len & 0xFF;
-        for (let i = 0; i < this.len; i ++) {
-            buf[index + 1 + i] = this.buf[index + i];
-        }
+        memcpy(buf, index + 1, this.buf, this.index, this.len);
     }
 
     decode(buf: number[], index: number): void {

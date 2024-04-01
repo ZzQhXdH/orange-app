@@ -1,4 +1,4 @@
-import { DeviceProtoType, Uint8 } from "./codec";
+import { DeviceProtoType } from "./codec";
 import { ExecError } from "./error";
 
 
@@ -28,11 +28,16 @@ export class RecvFrame {
         }
     }
 
-    assert() {
-        const err = new Uint8();
-        this.parse(err);
-        if (err.value != 0) {
-            throw new ExecError(err.value);
+    parse_res(...args: DeviceProtoType[]) {
+        // type seq cmd err
+        const ec = this.buf[3];
+        if (ec != 0) {
+            throw new ExecError(ec);
+        }
+        let index = 4;
+        for (const arg of args) {
+            arg.decode(this.buf, index);
+            index += arg.size();
         }
     }
 }

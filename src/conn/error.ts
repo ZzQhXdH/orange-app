@@ -23,9 +23,9 @@ export function errMsg(ec: number) {
         case 6: return 'OTA MD5错误';
         case 7: return 'OTA PKG超时';
         case 8: return '取物门超时';
-        case 9: return 'MDB超时'; 
+        case 9: return 'MDB超时';
         case 0x0A: return 'MDB无效的返回';
-        case 0x0B: return 'MDB退款错误'; 
+        case 0x0B: return 'MDB退款错误';
         default: return `未知错误:${ec}`;
     }
 }

@@ -5,7 +5,7 @@
       <el-input placeholder="退款金额" clearable style="width: 80px;" v-model="ctx.payout_value" />
       <el-button type="warning" @click="onClickPayout" class="ml10">退款</el-button>
 
-      <el-input class="ml10" clearable placeholder="控制码" style="width: 80px;" v-model="ctx.pay_ctrl"/>
+      <el-input class="ml10" clearable placeholder="控制码" style="width: 80px;" v-model="ctx.pay_ctrl" />
       <el-button @click="onClickPayCtrl" type="primary" class="ml10">启用/禁用</el-button>
     </div>
     <div class="row_center mt5">
@@ -15,10 +15,10 @@
       <el-button type="primary" @click="onClickInit">初始化</el-button>
     </div>
     <div class="row">
-      <CoinStatus/>
-      <CoinMan/>
+      <CoinStatus />
+      <CoinMan />
     </div>
-    
+
   </div>
 </template>
 

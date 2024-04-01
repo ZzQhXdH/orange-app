@@ -19,10 +19,16 @@ export function parseUtf8(buf: number[] | Uint8Array, index: number, len: number
 
 export function toHex(buf: number[] | Uint8Array, index: number, len: number) {
     let s = '';
-    for (let i = 0; i < len; i ++) {
+    for (let i = 0; i < len; i++) {
         const v = buf[i + index];
         s += HEX_LIST[(v >> 4) & 0x0F];
         s += HEX_LIST[v & 0x0F];
     }
     return s;
+}
+
+export function memcpy(dst: number[] | Uint8Array, dst_index: number, src: number[] | Uint8Array, src_index: number, src_len: number) {
+    for (let i = 0; i < src_len; i++) {
+        dst[i + dst_index] = src[i + src_index];
+    }
 }

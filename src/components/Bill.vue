@@ -4,8 +4,8 @@
 		<div class="row_center mt5">
 			<el-button @click="onClickInit" type="primary">初始化</el-button>
 
-			<el-input class="ml10" clearable placeholder="控制码" style="width: 80px;" v-model="ctx.pay_ctrl"/>
-      <el-button @click="onClickPayCtrl" type="primary" class="ml10">启用/禁用</el-button>
+			<el-input class="ml10" clearable placeholder="控制码" style="width: 80px;" v-model="ctx.pay_ctrl" />
+			<el-button @click="onClickPayCtrl" type="primary" class="ml10">启用/禁用</el-button>
 		</div>
 		<div class="row_center">
 			<BillStatus class="start_self" />
@@ -27,11 +27,11 @@ import service from '../conn/service';
 import { reactive } from 'vue';
 
 interface Ctx {
-  pay_ctrl: string,
+	pay_ctrl: string,
 }
 
 const ctx = reactive<Ctx>({
-  pay_ctrl: '',
+	pay_ctrl: '',
 });
 
 async function onClickAccept() {
@@ -53,13 +53,13 @@ async function onClickInit() {
 }
 
 async function onClickPayCtrl() {
-  runAction('启用/禁用', '控制', async () => {
-    if (ctx.pay_ctrl.length == 0) {
-      throw '请输入控制码';
-    }
-    const v = parseInt(ctx.pay_ctrl, 16);
-    await service.payCtrl(1, v);
-  });
+	runAction('启用/禁用', '控制', async () => {
+		if (ctx.pay_ctrl.length == 0) {
+			throw '请输入控制码';
+		}
+		const v = parseInt(ctx.pay_ctrl, 16);
+		await service.payCtrl(1, v);
+	});
 }
 
 

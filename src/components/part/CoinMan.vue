@@ -4,7 +4,7 @@
 			<label>制作商信息</label>
 			<el-button class="ml5" type="primary" @click="onClickQuery">查询</el-button>
 		</div>
-		
+
 		<div class="row_center">
 			<label>制造商:</label>
 			<label>{{ id?.getManfacturerCode() }}</label>

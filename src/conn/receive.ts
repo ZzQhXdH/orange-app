@@ -34,7 +34,7 @@ export function setWaitPromise(type: number, seq: number, timeout: number = 500)
     return new Promise<RecvFrame>((resolve, reject) => {
         const id = setTimeout(() => {
             promiseMap.delete(key);
-            reject( new TimeoutError(`${type} ${seq} 超时`) );
+            reject(new TimeoutError(`${type} ${seq} 超时`));
         }, timeout);
         promiseMap.set(key, (frame) => {
             clearTimeout(id);
@@ -48,16 +48,16 @@ export function receive_handle(buf: number[]) {
     const frame = new RecvFrame(buf);
 
     switch (frame.type) {
-        case proto_type.ACK: 
+        case proto_type.ACK:
         case proto_type.PONG:
-        case proto_type.SIMPLE_RES: 
-        case proto_type.RES: 
+        case proto_type.SIMPLE_RES:
+        case proto_type.RES:
             const resolve = promiseMap.get(frame.key());
             if (resolve != null) {
                 promiseMap.delete(frame.key());
                 resolve(frame);
             }
-        break;
+            break;
 
         case proto_type.NOTIFY: handle_notify(frame); break;
         case proto_type.NOTIFY_ACK: handle_notify_ack(frame); break;

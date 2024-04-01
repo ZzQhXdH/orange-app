@@ -24,7 +24,7 @@ function parseCoinStatus(value: number) {
 
   switch (type) {
     case 0: return '手动取币';
-    case 1: return '投币'; 
+    case 1: return '投币';
     case 2: return `状态:${status}`;
     case 3: return `SLUG:${status}`;
     case 4: return `ACK`;
@@ -46,11 +46,40 @@ function parseBillStatus(value: number) {
   }
 }
 
+class SensorFlagValue {
+  div_up: boolean;
+  div_down: boolean;
+  layer1: boolean;
+  layer2: boolean;
+  track: boolean;
+  orange_drop: boolean;
+  move_checked: boolean;
+  drop_cup_checked: boolean;
+  film_checked: boolean;
+  pick_close: boolean;
+  door: boolean;
+
+  constructor(v: Uint16) {
+    this.div_up = v.isSet(0);
+    this.div_down = v.isSet(1);
+    this.layer1 = v.isSet(2);
+    this.layer2 = v.isSet(3);
+    this.track = v.isSet(4);
+    this.orange_drop = v.isSet(5);
+    this.move_checked = v.isSet(6);
+    this.drop_cup_checked = v.isSet(7);
+    this.film_checked = v.isSet(8);
+    this.pick_close = v.isSet(9);
+    this.door = v.isSet(10);
+  }
+};
+
 class DeviceStatus {
 
   version: string = '';
   coinStatus: string = '';
   billStatus: string = '';
+  sensor: SensorFlagValue = new SensorFlagValue(new Uint16(0));
 
   constructor(frame: RecvFrame | null = null) {
     if (frame == null) {
@@ -59,12 +88,14 @@ class DeviceStatus {
     const version = new Uint16();
     const coin = new Uint16();
     const bill = new Uint16();
+    const sensorFlag = new Uint16();
 
-    frame.parse(version, coin, bill);
+    frame.parse(version, coin, bill, sensorFlag);
 
     this.version = toHex4(version.value);
     this.coinStatus = parseCoinStatus(coin.value);
     this.billStatus = parseBillStatus(bill.value);
+    this.sensor = new SensorFlagValue(sensorFlag);
   }
 };
 
@@ -154,7 +185,7 @@ export function calcCoinInfo(setup: CoinSetupResp, status: CoinStatusResp) {
   const infos: CoinInfo[] = [];
   let all = 0;
   const route = setup.coinTypeRouting.value;
-  for (let i = 0; i < 16; i ++) {
+  for (let i = 0; i < 16; i++) {
     const mask = 0x01 << i;
     if ((route & mask) == 0) {
       continue;
@@ -192,7 +223,7 @@ export class BillSetupResp {
 
   getType() {
     let s = [];
-    for (let i = 0; i < 16; i ++) {
+    for (let i = 0; i < 16; i++) {
       const v = this.credit.buf[i];
       if (v != 0) {
         s.push(v * this.scalingFactor.value);

@@ -1,4 +1,4 @@
-import { DeviceProtoType, Uint16, Uint8, encode_u16, encode_u8 } from "./codec";
+import { ByteView, DeviceProtoType, Uint16, Uint32, Uint8, encode_u16, encode_u8 } from "./codec";
 import device from "./device";
 import { proto_type, setWaitPromise } from "./receive";
 import { TaskInfo } from "./proto";
@@ -67,26 +67,31 @@ function makeProto(...args: DeviceProtoType[]) {
 	return buf;
 }
 
-async function simpleReq(seq: number, cmd: number, ...args: DeviceProtoType[]) {
+async function simpleReq(cmd: number, args: DeviceProtoType[], result: DeviceProtoType[], timeout: number = 500) {
+	const seq = getSeq();
 	const buf = makeProto(new Uint8(proto_type.SIMPLE_REQ), new Uint8(seq), new Uint8(cmd), ...args);
-	const fut = setWaitPromise(proto_type.SIMPLE_RES, seq, 500);
+	const fut = setWaitPromise(proto_type.SIMPLE_RES, seq, timeout);
 	await device.write(buf);
 	const res = await fut;
 	if ((res.seq != seq) || (res.cmd != cmd)) {
-		throw `seq or cmd invalid`;
+		throw `simple-req/res seq or cmd invalid`;
 	}
-	return res;
+	res.parse_res(...result);
 }
 
 async function getTaskInfo(): Promise<TaskInfo> {
-	const frame = await simpleReq(getSeq(), proto.GET_TASK_INFO);
-	const seq = new Uint8();
-	const cmd = new Uint8();
-	frame.parse(seq, cmd);
+	const task_seq = new Uint8();
+	const task_cmd = new Uint8();
+	simpleReq(proto.GET_TASK_INFO, [], [task_seq, task_cmd]);
 	return {
-		cmd: cmd.value,
-		seq: seq.value
+		cmd: task_cmd.value,
+		seq: task_seq.value
 	};
+}
+
+async function check_task(seq: number, cmd: number) {
+	const task_info = await getTaskInfo();
+	return (task_info.seq == seq) && (task_info.cmd == cmd);
 }
 
 async function session() {
@@ -118,7 +123,7 @@ async function write_ack(seq: number) {
 	await device.write(buf);
 }
 
-async function res3(seq: number, buf: number[]) {
+async function req3(seq: number, buf: number[]) {
 	let err: any = null;
 	for (let i = 0; i < 3; i++) {
 		try {
@@ -139,35 +144,34 @@ async function res3(seq: number, buf: number[]) {
 	throw err;
 }
 
-async function req(seq: number, cmd: number, ...args: DeviceProtoType[]) {
+async function req(cmd: number, args: DeviceProtoType[], result: DeviceProtoType[]) {
 	await session3();
 
+	const seq = getSeq();
 	const buf = makeProto(new Uint8(proto_type.REQ), new Uint8(seq), new Uint8(cmd), ...args);
 	let resFut = setWaitPromise(proto_type.RES, seq, 3000);
-	await res3(seq, buf);
+	await req3(seq, buf);
 
 	for (; ;) {
 
 		try {
 			const frame = await resFut;
 			await write_ack(seq);
-			return frame;
+			frame.parse_res(...result);
+			return;
 		} catch (e) {
-			if (e instanceof TimeoutError) {
-				console.log('res 超时');
-
-				resFut = setWaitPromise(proto_type.RES, seq, 3000);
-				const taskInfo = await getTaskInfo();
-				console.log(taskInfo);
-
-				if ((taskInfo.seq != seq) || (taskInfo.cmd != cmd)) {
-					const frame = await resFut;
-					await write_ack(seq);
-					return frame;
-				}
-			} else {
+			if (!(e instanceof TimeoutError)) {
 				throw e;
 			}
+			console.log('res 超时');
+			resFut = setWaitPromise(proto_type.RES, seq, 3000);
+			if (await check_task(seq, cmd)) {
+				continue;
+			}
+			const frame = await resFut;
+			await write_ack(seq);
+			frame.parse_res(...result);
+			return;
 		}
 	}
 }
@@ -189,66 +193,61 @@ export default {
 		}
 	},
 
+	async otaStart(size: number) {
+		await simpleReq(proto.OTA_START, [new Uint32(size)], [], 3000);
+	},
+
+	async otaTranslate(id: number, part: ByteView) {
+		await simpleReq(proto.OTA_TRANSLATE, [new Uint16(id), part], []);
+	},
+
+	async otaComplete(md5: ByteView) {
+		await simpleReq(proto.OTA_COMPLETE, [md5], [], 3000);
+	},
+
 	async coinPayout(value: number) {
-		const frame = await req(getSeq(), proto.COIN_PAYOUT, new Uint16(value));
-		frame.assert();
-		const ec = new Uint8();
 		const v = new Uint16();
-		frame.parse(ec, v);
+		await req(proto.COIN_PAYOUT, [new Uint16(value)], [v]);
 		return v.value;
 	},
 
 	async coinInfo() {
-		const frame = await req(getSeq(), proto.COIN_INFO);
-		frame.assert();
-		const ec = new Uint8();
 		const resp = new CoinSetupResp();
-		frame.parse(ec,
+		await req(proto.COIN_INFO, [], [
 			resp.featureLevel,
 			resp.countryCode,
 			resp.coinScalingFactor,
 			resp.decimalPlaces,
 			resp.coinTypeRouting,
 			resp.coinTypeCredit
-		);
+		]);
 		return resp;
 	},
 
 	async coinStatus() {
-		const frame = await req(getSeq(), proto.COIN_STATUS);
-		frame.assert();
-		const ec = new Uint8();
 		const resp = new CoinStatusResp();
-		frame.parse(ec,
+		await req(proto.COIN_STATUS, [], [
 			resp.tubeFullStatus,
 			resp.tubeStatus
-		);
+		]);
 		return resp;
 	},
 
 	async coinId() {
-		const frame = await req(getSeq(), proto.COIN_ID);
-		frame.assert();
-		const ec = new Uint8();
 		const resp = new CoinIdentificationResp();
-		frame.parse(
-			ec,
+		await req(proto.COIN_ID, [], [
 			resp.manufacturerCode,
 			resp.serialNumber,
 			resp.model,
 			resp.version,
 			resp.optionFeatures
-		);
+		]);
 		return resp;
 	},
 
 	async billInfo() {
-		const frame = await req(getSeq(), proto.BILL_INFO);
-		frame.assert();
-		const ec = new Uint8();
 		const resp = new BillSetupResp();
-		frame.parse(
-			ec,
+		await req(proto.BILL_INFO, [], [
 			resp.featureLevel,
 			resp.countryCode,
 			resp.scalingFactor,
@@ -257,45 +256,37 @@ export default {
 			resp.securityLevel,
 			resp.escrow,
 			resp.credit
-		);
+		]);
 		return resp;
 	},
 
 	async builId() {
-		const frame = await req(getSeq(), proto.BILL_ID);
-		frame.assert();
-		const ec = new Uint8();
 		const resp = new BillIdentificationResp();
-		frame.parse(
-			ec,
+		await req(proto.BILL_ID, [], [
 			resp.manufacturerCode,
 			resp.serialNumber,
 			resp.model,
 			resp.version,
 			resp.optionFeatures
-		);
+		]);
 		return resp;
 	},
 
 	async payCtrl(id: number, mask: number) {
-		const frame = await req(getSeq(), proto.PAYL_CTRL, new Uint8(id), new Uint16(mask));
-		frame.assert();
+		await req(proto.PAYL_CTRL, [new Uint8(id), new Uint16(mask)], []);
 	},
 
 	async billCtrl(v: number) { // 0 退还  1: 接收
-		const frame = await req(getSeq(), proto.BILL_CTRL, new Uint8(v));
-		frame.assert();
+		await req(proto.BILL_CTRL, [new Uint8(v)], []);
 	},
 
 	// id: 0硬币器 1纸币器 2VPOS
 	async payInit(id: number) {
-		const frame = await req(getSeq(), proto.PAY_INIT, new Uint8(id));
-		frame.assert();
+		await req(proto.PAY_INIT, [new Uint8(id)], []);
 	},
 
 	async pickDoorCtrl(ctrl: number) {
-		const frame = await req(getSeq(), proto.PICK_CTRL, new Uint8(ctrl));
-		frame.assert();
+		await req(proto.PICK_CTRL, [new Uint8(ctrl)], []);
 	}
 }
 
