@@ -58,6 +58,7 @@ class SensorFlagValue {
   film_checked: boolean;
   pick_close: boolean;
   door: boolean;
+  temp_ok: boolean;
 
   constructor(v: Uint16) {
     this.div_up = v.isSet(0);
@@ -71,6 +72,7 @@ class SensorFlagValue {
     this.film_checked = v.isSet(8);
     this.pick_close = v.isSet(9);
     this.door = v.isSet(10);
+    this.temp_ok = v.isSet(11);
   }
 };
 
@@ -80,6 +82,7 @@ class DeviceStatus {
   coinStatus: string = '';
   billStatus: string = '';
   sensor: SensorFlagValue = new SensorFlagValue(new Uint16(0));
+  temp: number = 0;
 
   constructor(frame: RecvFrame | null = null) {
     if (frame == null) {
@@ -89,13 +92,14 @@ class DeviceStatus {
     const coin = new Uint16();
     const bill = new Uint16();
     const sensorFlag = new Uint16();
-
-    frame.parse(version, coin, bill, sensorFlag);
+    const temp = new Uint8();
+    frame.parse(version, coin, bill, sensorFlag, temp);
 
     this.version = toHex4(version.value);
     this.coinStatus = parseCoinStatus(coin.value);
     this.billStatus = parseBillStatus(bill.value);
     this.sensor = new SensorFlagValue(sensorFlag);
+    this.temp = temp.signalValue();
   }
 };
 

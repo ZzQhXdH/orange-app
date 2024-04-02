@@ -27,6 +27,13 @@ export class Uint8 implements DeviceProtoType {
 
     value: number;
 
+    signalValue(): number {
+        if ((this.value & 0x80) != 0) {
+            return -(0x100 - (this.value));
+        }
+        return this.value;
+    }
+
     constructor(v: number = 0) {
         this.value = v;
     }
