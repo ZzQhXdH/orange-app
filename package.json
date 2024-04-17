@@ -10,6 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
     "@tauri-apps/api": "^1.5.2",
     "element-plus": "^2.4.4",
     "md5": "^2.3.0",
