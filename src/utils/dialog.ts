@@ -9,6 +9,11 @@ function createElement(text: string, ...clzs: string[]) {
     return ele;
 }
 
+interface MTEvent {
+    clientX: number;
+    clientY: number;
+}
+
 export class Dialog {
 
     btnClose = createElement('', 'close_btn');
@@ -75,16 +80,28 @@ export class Dialog {
             this.close();
         };
         this.dialog.classList.add('dialog_show');
+
+        document.addEventListener('touchend', this.mouseUp);
         document.addEventListener('mouseup', this.mouseUp);
+
+        this.dialog.addEventListener('touchstart', this.mouseDown);
         this.dialog.addEventListener('mousedown', this.mouseDown);
+
+        document.addEventListener('touchmove', this.mouseMove);
         document.addEventListener('mousemove', this.mouseMove);
         document.body.appendChild(this.dialog);
     }
 
     close() {
+        document.removeEventListener('touchend', this.mouseUp);
         document.removeEventListener('mouseup', this.mouseUp);
+        
+        this.dialog.removeEventListener('touchstart', this.mouseDown);
         this.dialog.removeEventListener('mousedown', this.mouseDown);
+        
+        document.removeEventListener('touchmove', this.mouseMove);
         document.removeEventListener('mousemove', this.mouseMove);
+        
         this.dialog.classList.remove('dialog_show');
         this.dialog.offsetWidth;
         this.dialog.classList.add('dialog_close');
@@ -109,24 +126,44 @@ export class Dialog {
     private mouseMove = this.onMouseMove.bind(this);
     private mouseUp = this.onMouseUp.bind(this);
 
-    private onMouseDown(e: MouseEvent) {
+    private onMouseDown(event: MouseEvent | TouchEvent) {
+        let e: MTEvent = {
+            clientX: 0,
+            clientY: 0,
+        }
+        if (event instanceof TouchEvent) {
+            e = event.touches[0];
+        } else {
+            e = event;
+        }
         this.dragFlag = true;
         const rect = this.dialog.getBoundingClientRect();
         this.offsetX = e.clientX - (rect.left + rect.width / 2);
         this.offsetY = e.clientY - (rect.top + rect.height / 2);
     }
 
-    private onMouseMove(e: MouseEvent) {
+    private onMouseMove(event: MouseEvent | TouchEvent) {
         if (!this.dragFlag) {
             return;
         }
+        let e: MTEvent = {
+            clientX: 0,
+            clientY: 0,
+        }
+
+        if (event instanceof TouchEvent) {
+            e = event.touches[0];
+        } else {
+            e = event;
+        }
+
         const x = e.clientX - this.offsetX;
         const y = e.clientY - this.offsetY;
         this.dialog.style.left = `${x}px`;
         this.dialog.style.top = `${y}px`;
     }
 
-    private onMouseUp(_: MouseEvent) {
+    private onMouseUp(_: MouseEvent | TouchEvent) {
         this.dragFlag = false;
     }
 }
