@@ -1,14 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use error::{AppErr, ErrorWrap, OptionWrap};
+use error::{AppErr, ErrorWrap};
 use serde::Deserialize;
 use tauri::{PhysicalPosition, Window};
-use winapi::{
-    shared::windef::{HWND, POINT},
-    um::winuser::{GetCursorPos, GetPointerInfo, ScreenToClient},
-};
-
 mod device;
 mod error;
 mod utils;
@@ -24,20 +19,8 @@ fn set_position_offset(pos: Pos, win: Window) -> Result<(), AppErr> {
     let p = win.inner_position().wrap()?;
     win.set_position(PhysicalPosition::new(p.x + pos.x, p.y + pos.y))
         .wrap()?;
-    // let hwnd = win.hwnd().wrap()?;
-    // println!("{:#?}", get_pos(hwnd.0 as HWND));
     Ok(())
 }
-
-// fn get_pos(hwnd: HWND) -> Pos {
-//     unsafe {
-//         let mut pt: POINT = std::mem::zeroed();
-//         // GetPointerInfo(pointerId, pointerInfo)
-//         GetCursorPos(&mut pt);
-//         ScreenToClient(hwnd, &mut pt);
-//         Pos { x: pt.x, y: pt.y }
-//     }
-// }
 
 fn main() {
     tauri::Builder::default()

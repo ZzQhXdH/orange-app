@@ -34,8 +34,6 @@
 import { window as tauriWindow } from "@tauri-apps/api";
 import { CloseBold } from '@element-plus/icons-vue'
 import { set_position_offset } from "./conn/win";
-import { PhysicalPosition } from "@tauri-apps/api/window";
-// ...
 
 let pressedFlag = false;
 let pressedPos = {
