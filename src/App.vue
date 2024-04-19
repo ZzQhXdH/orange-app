@@ -73,7 +73,7 @@ async function onMouseMove(e: MouseEvent | TouchEvent) {
     obj.x = Math.floor(e.touches[0].clientX - pressedPos.x);
     obj.y = Math.floor(e.touches[0].clientY - pressedPos.y);
   }
-  if ((obj.x * obj.x + obj.y * obj.y) < 400) {
+  if ((obj.x * obj.x + obj.y * obj.y) < 25) {
     return;
   }
  // await tauriWindow.appWindow.setPosition(new PhysicalPosition(obj.x, obj.y));
