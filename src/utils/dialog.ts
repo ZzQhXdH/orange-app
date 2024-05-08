@@ -93,6 +93,11 @@ export class Dialog {
     }
 
     close() {
+        if (this.closeFlag) {
+            return;
+        }
+        this.closeFlag = true;
+
         document.removeEventListener('touchend', this.mouseUp);
         document.removeEventListener('mouseup', this.mouseUp);
         
@@ -121,6 +126,7 @@ export class Dialog {
     private dragFlag = false;
     private offsetX = 0;
     private offsetY = 0;
+    private closeFlag = false;
 
     private mouseDown = this.onMouseDown.bind(this);
     private mouseMove = this.onMouseMove.bind(this);

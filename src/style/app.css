@@ -16,11 +16,11 @@ html {
 body {
     width: 100%;
     height: 100%;
-    padding: 5px;
-    box-sizing: border-box;
+    /* padding: 5px;
+    box-sizing: border-box; */
 }
 
-#app {
+/* #app {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
@@ -29,7 +29,7 @@ body {
     padding: 5px;
     box-shadow: 0px 0px 5px #ccc;
     background-color: white;
-}
+} */
 
 ::-webkit-scrollbar {
     display: none;
@@ -100,18 +100,19 @@ body {
 }
 
 .dialog_close {
-    animation: anim_scale 300ms ;
+    animation: anim_scale 300ms;
     animation-direction: reverse;
 }
 
 .dialog_show {
-    animation: anim_scale 200ms ;
+    animation: anim_scale 200ms;
 }
 
 @keyframes anim_rotate_loop {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -225,3 +226,11 @@ body {
     align-self: flex-start
 }
 
+
+[data-tauri-drag-region] {
+    -webkit-app-region: drag;
+}
+
+[data-tauri-drag-region-exclude] {
+    -webkit-app-region: no-drag;
+}

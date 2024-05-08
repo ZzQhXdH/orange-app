@@ -10,7 +10,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [profile.release]
-opt-level = 3
+opt-level = 's'
 lto = true
 codegen-units = 1
 panic = "abort"
@@ -20,13 +20,16 @@ strip = true
 tauri-build = { version = "1.5.1", features = [] }
 
 [dependencies]
-tauri = { version = "1.6.1", features = [ "window-set-position", "window-start-dragging", "window-close", "dialog-open", "fs-read-file", "shell-open"] }
+tauri = { version = "1.6.1", features = [ "window-set-cursor-visible", "protocol-all", "window-set-fullscreen", "windows7-compat", "window-set-position", "window-start-dragging", "window-close", "dialog-open", "fs-read-file", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1.0.56"
 tokio-serial = "5.4.4"
 tokio = { version = "1.35.1", features = ["full"] }
 winapi = { version = "0.3.9", features = ["winuser"] }
+actix-web = "4.5.1"
+serde_cbor = "0.11.2"
+serde_bytes = "0.11.14"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

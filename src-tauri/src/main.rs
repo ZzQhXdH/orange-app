@@ -8,6 +8,8 @@ mod device;
 mod error;
 mod utils;
 
+mod api;
+
 #[derive(Debug, Deserialize)]
 struct Pos {
     x: i32,
@@ -22,7 +24,12 @@ fn set_position_offset(pos: Pos, win: Window) -> Result<(), AppErr> {
     Ok(())
 }
 
-fn main() {
+
+
+
+fn main() -> Result<(), AppErr> {
+    api::run();
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             device::serial_port_name,
@@ -33,5 +40,7 @@ fn main() {
             set_position_offset
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .wrap()?;
+
+    Ok(())
 }

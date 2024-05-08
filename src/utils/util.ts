@@ -32,3 +32,8 @@ export function memcpy(dst: number[] | Uint8Array, dst_index: number, src: numbe
         dst[i + dst_index] = src[i + src_index];
     }
 }
+
+export function uid() {
+    return crypto.getRandomValues(new Uint32Array(1))[0];
+}
+

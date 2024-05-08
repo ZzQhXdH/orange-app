@@ -1,10 +1,10 @@
+use std::ptr::NonNull;
+
 
 #[inline]
 pub fn get_mut<T>(v: &T) -> &mut T {
     unsafe {
-        let const_v: *const T = v as *const T;
-        let mut_v = const_v as *mut T;
-        &mut *mut_v
+        NonNull::new_unchecked(v as *const T as *mut T).as_mut()
     }
 }
 
