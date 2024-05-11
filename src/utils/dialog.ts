@@ -81,14 +81,14 @@ export class Dialog {
         };
         this.dialog.classList.add('dialog_show');
 
-        document.addEventListener('touchend', this.mouseUp);
-        document.addEventListener('mouseup', this.mouseUp);
+        this.dialog.addEventListener('touchend', this.onMouseUp);
+        this.dialog.addEventListener('mouseup', this.onMouseUp);
 
-        this.dialog.addEventListener('touchstart', this.mouseDown);
-        this.dialog.addEventListener('mousedown', this.mouseDown);
+        this.dialog.addEventListener('touchstart', this.onMouseDown);
+        this.dialog.addEventListener('mousedown', this.onMouseDown);
 
-        document.addEventListener('touchmove', this.mouseMove);
-        document.addEventListener('mousemove', this.mouseMove);
+        this.dialog.addEventListener('touchmove', this.onMouseMove);
+        this.dialog.addEventListener('mousemove', this.onMouseMove);
         document.body.appendChild(this.dialog);
     }
 
@@ -97,16 +97,6 @@ export class Dialog {
             return;
         }
         this.closeFlag = true;
-
-        document.removeEventListener('touchend', this.mouseUp);
-        document.removeEventListener('mouseup', this.mouseUp);
-        
-        this.dialog.removeEventListener('touchstart', this.mouseDown);
-        this.dialog.removeEventListener('mousedown', this.mouseDown);
-        
-        document.removeEventListener('touchmove', this.mouseMove);
-        document.removeEventListener('mousemove', this.mouseMove);
-        
         this.dialog.classList.remove('dialog_show');
         this.dialog.offsetWidth;
         this.dialog.classList.add('dialog_close');
@@ -128,11 +118,7 @@ export class Dialog {
     private offsetY = 0;
     private closeFlag = false;
 
-    private mouseDown = this.onMouseDown.bind(this);
-    private mouseMove = this.onMouseMove.bind(this);
-    private mouseUp = this.onMouseUp.bind(this);
-
-    private onMouseDown(event: MouseEvent | TouchEvent) {
+    private onMouseDown = (event: MouseEvent | TouchEvent) => {
         let e: MTEvent = {
             clientX: 0,
             clientY: 0,
@@ -148,7 +134,7 @@ export class Dialog {
         this.offsetY = e.clientY - (rect.top + rect.height / 2);
     }
 
-    private onMouseMove(event: MouseEvent | TouchEvent) {
+    private onMouseMove = (event: MouseEvent | TouchEvent) => {
         if (!this.dragFlag) {
             return;
         }
@@ -169,7 +155,7 @@ export class Dialog {
         this.dialog.style.top = `${y}px`;
     }
 
-    private onMouseUp(_: MouseEvent | TouchEvent) {
+    private onMouseUp = (_: MouseEvent | TouchEvent) => {
         this.dragFlag = false;
     }
 }
